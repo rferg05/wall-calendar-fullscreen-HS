@@ -1,0 +1,353 @@
+{
+  "id": "wall-calendar-fullscreen",
+  "name": "Wall Calendar Full Screen",
+  "version": "1.0.0",
+  "description": "A full-screen calendar for the wall: a big clock and today's events with a now line, tomorrow a step smaller, then the rest of the next 7 or 14 days. Readable from across the room over any background.",
+  "author": "Ryan",
+  "license": "MIT",
+  "minAppVersion": "1.7.1",
+  "moduleType": "wall-calendar-fullscreen",
+  "category": "Calendar",
+  "icon": "calendar-clock",
+  "defaultConfig": {
+    "view": "week",
+    "showClock": true,
+    "clockSeconds": false,
+    "showTime": true,
+    "showLocation": true,
+    "titleLines": 2,
+    "colorBy": "calendar",
+    "mergeDuplicates": true,
+    "sharedStyle": "split",
+    "sharedColor": "#a855f7",
+    "chipStyle": "tinted",
+    "pastStyle": "gray",
+    "showHolidays": true,
+    "customHolidayColor": false,
+    "holidayColor": "#ef4444",
+    "showBirthdays": true,
+    "hideWords": "",
+    "dayBackground": "#080a0e",
+    "dayBackdrop": 55,
+    "dayBlur": 0,
+    "dayBorderWidth": 0,
+    "dayBorderColor": "#64748b",
+    "showDividers": true,
+    "dividerColor": "#cbd5e1",
+    "dividerWidth": 2,
+    "textScale": 1,
+    "textOutline": true,
+    "accentColor": "#f59e0b",
+    "timeFormat": "auto"
+  },
+  "defaultSize": {
+    "w": 1920,
+    "h": 1080
+  },
+  "defaultStyle": {
+    "fontSize": 16,
+    "padding": 20,
+    "backgroundColor": "rgba(0, 0, 0, 0.25)"
+  },
+  "configSchema": {
+    "type": "object",
+    "properties": {
+      "view": {
+        "type": "string",
+        "title": "Show",
+        "description": "Counting from today: today and tomorrow get their own panels, the rest of the days share the third.",
+        "enum": [
+          "week",
+          "twoWeeks"
+        ],
+        "enumLabels": [
+          "7 days",
+          "14 days"
+        ],
+        "ui:widget": "select",
+        "ui:group": "View"
+      },
+      "showClock": {
+        "type": "boolean",
+        "title": "Clock",
+        "description": "The time and date, large, above today's events.",
+        "ui:widget": "toggle",
+        "ui:group": "View"
+      },
+      "clockSeconds": {
+        "type": "boolean",
+        "title": "Seconds on the clock",
+        "ui:widget": "toggle",
+        "ui:group": "View",
+        "ui:showWhen": {
+          "field": "showClock",
+          "equals": true
+        }
+      },
+      "showTime": {
+        "type": "boolean",
+        "title": "Start times",
+        "ui:widget": "toggle",
+        "ui:group": "Events"
+      },
+      "showLocation": {
+        "type": "boolean",
+        "title": "Location",
+        "description": "Under the title, for today and tomorrow. The part before the first comma.",
+        "ui:widget": "toggle",
+        "ui:group": "Events"
+      },
+      "titleLines": {
+        "type": "number",
+        "title": "Lines per title in Coming up",
+        "description": "On a busy day in Coming up, long titles are cut to this many lines so more events fit. Today and tomorrow show up to 3.",
+        "minimum": 1,
+        "maximum": 4,
+        "ui:widget": "slider",
+        "ui:step": 1,
+        "ui:group": "Events"
+      },
+      "colorBy": {
+        "type": "string",
+        "title": "Color events by",
+        "description": "Person uses each family member's color from Settings > Family, for calendars linked to them.",
+        "enum": [
+          "calendar",
+          "person"
+        ],
+        "enumLabels": [
+          "Calendar color",
+          "Person"
+        ],
+        "ui:widget": "select",
+        "ui:group": "Events"
+      },
+      "mergeDuplicates": {
+        "type": "boolean",
+        "title": "Merge duplicate events",
+        "description": "Shows one event for copies that start within 15 minutes of each other with nearly the same title, like \"Reservation at Avec\" and \"Reservation: Avec\". Off merges only exact copies.",
+        "ui:widget": "toggle",
+        "ui:group": "Events"
+      },
+      "sharedStyle": {
+        "type": "string",
+        "title": "Events you share",
+        "description": "An event on more than one person's calendar. Both colors puts one person's color on each end. People are told apart by Settings > Family, with each person's calendars linked to them; calendars linked to no one count as separate people.",
+        "enum": [
+          "split",
+          "color"
+        ],
+        "enumLabels": [
+          "Both colors",
+          "One color of their own"
+        ],
+        "ui:widget": "select",
+        "ui:group": "Events"
+      },
+      "sharedColor": {
+        "type": "string",
+        "title": "Shared event color",
+        "ui:widget": "color",
+        "ui:group": "Events",
+        "ui:showWhen": {
+          "field": "sharedStyle",
+          "equals": "color"
+        }
+      },
+      "chipStyle": {
+        "type": "string",
+        "title": "Event style",
+        "description": "All-day events are always filled, so they stand apart from timed ones.",
+        "enum": [
+          "tinted",
+          "solid"
+        ],
+        "enumLabels": [
+          "Dark with a color bar",
+          "Filled with the color"
+        ],
+        "ui:widget": "select",
+        "ui:group": "Events"
+      },
+      "pastStyle": {
+        "type": "string",
+        "title": "Past events",
+        "description": "Events that have ended. Gray out keeps a dimmed bar of the event's color, so you can still tell whose it was. Today's finished events sit above the now line, and fold into one \"3 earlier today\" line when today runs out of room.",
+        "enum": [
+          "gray",
+          "fade",
+          "hide",
+          "none"
+        ],
+        "enumLabels": [
+          "Gray out",
+          "Fade",
+          "Hide",
+          "Leave as is"
+        ],
+        "ui:widget": "select",
+        "ui:group": "Events"
+      },
+      "showHolidays": {
+        "type": "boolean",
+        "title": "Holidays",
+        "ui:widget": "toggle",
+        "ui:group": "Events"
+      },
+      "customHolidayColor": {
+        "type": "boolean",
+        "title": "Own color for holidays",
+        "description": "Off uses the holiday calendar's color from Settings > Calendar.",
+        "ui:widget": "toggle",
+        "ui:group": "Events",
+        "ui:showWhen": {
+          "field": "showHolidays",
+          "equals": true
+        }
+      },
+      "holidayColor": {
+        "type": "string",
+        "title": "Holiday color",
+        "ui:widget": "color",
+        "ui:group": "Events",
+        "ui:showWhen": {
+          "field": "customHolidayColor",
+          "equals": true
+        }
+      },
+      "showBirthdays": {
+        "type": "boolean",
+        "title": "Birthdays",
+        "ui:widget": "toggle",
+        "ui:group": "Events"
+      },
+      "hideWords": {
+        "type": "string",
+        "title": "Hide events whose title contains",
+        "description": "Comma-separated, e.g. \"Busy, Tentative\".",
+        "ui:widget": "text",
+        "ui:group": "Events"
+      },
+      "dayBackground": {
+        "type": "string",
+        "title": "Background color",
+        "description": "Each panel's and day's card. A dark color keeps white text readable over bright photos.",
+        "ui:widget": "color",
+        "ui:group": "Day cards"
+      },
+      "dayBackdrop": {
+        "type": "number",
+        "title": "Background strength (%)",
+        "description": "How strongly the background color covers the photo behind each card: 0 is clear, 100 is solid. Low values show the photo through, for style; the text outline keeps it readable.",
+        "minimum": 0,
+        "maximum": 100,
+        "ui:widget": "slider",
+        "ui:step": 5,
+        "ui:group": "Day cards"
+      },
+      "dayBlur": {
+        "type": "number",
+        "title": "Frosted glass (blur)",
+        "description": "Blurs the photo behind each card, like the module's own Backdrop blur, so text reads over a busy background even at a low strength. 0 is off.",
+        "minimum": 0,
+        "maximum": 30,
+        "ui:widget": "slider",
+        "ui:step": 1,
+        "ui:group": "Day cards"
+      },
+      "dayBorderWidth": {
+        "type": "number",
+        "title": "Border thickness (px)",
+        "description": "0 is no border.",
+        "minimum": 0,
+        "maximum": 8,
+        "ui:widget": "slider",
+        "ui:step": 1,
+        "ui:group": "Day cards"
+      },
+      "dayBorderColor": {
+        "type": "string",
+        "title": "Border color",
+        "ui:widget": "color",
+        "ui:group": "Day cards"
+      },
+      "showDividers": {
+        "type": "boolean",
+        "title": "Dividers under headings",
+        "description": "A rule under Today, Tomorrow and each day's name.",
+        "ui:widget": "toggle",
+        "ui:group": "Day cards"
+      },
+      "dividerColor": {
+        "type": "string",
+        "title": "Divider color",
+        "ui:widget": "color",
+        "ui:group": "Day cards",
+        "ui:showWhen": {
+          "field": "showDividers",
+          "equals": true
+        }
+      },
+      "dividerWidth": {
+        "type": "number",
+        "title": "Divider thickness (px)",
+        "minimum": 1,
+        "maximum": 6,
+        "ui:widget": "slider",
+        "ui:step": 1,
+        "ui:group": "Day cards",
+        "ui:showWhen": {
+          "field": "showDividers",
+          "equals": true
+        }
+      },
+      "textScale": {
+        "type": "number",
+        "title": "Text size",
+        "description": "Text already grows with the module: today's events are about 44px on a full 1080p screen. This makes everything larger or smaller from there.",
+        "minimum": 0.5,
+        "maximum": 2,
+        "ui:widget": "slider",
+        "ui:step": 0.05,
+        "ui:group": "Legibility"
+      },
+      "textOutline": {
+        "type": "boolean",
+        "title": "Outline the clock and headings",
+        "ui:widget": "toggle",
+        "ui:group": "Legibility"
+      },
+      "accentColor": {
+        "type": "string",
+        "title": "Accent color",
+        "ui:widget": "color",
+        "ui:group": "Legibility",
+        "description": "The now line, today's heading, NOW and countdowns."
+      },
+      "timeFormat": {
+        "type": "string",
+        "title": "Clock times",
+        "enum": [
+          "auto",
+          "12h",
+          "24h"
+        ],
+        "enumLabels": [
+          "Household setting",
+          "12-hour",
+          "24-hour"
+        ],
+        "ui:widget": "select",
+        "ui:group": "Legibility"
+      }
+    }
+  },
+  "exports": {
+    "component": "default"
+  },
+  "dataRequirements": [
+    "calendar"
+  ],
+  "prefetchUrl": null,
+  "permissions": []
+}
