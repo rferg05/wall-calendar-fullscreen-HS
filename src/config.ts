@@ -6,9 +6,25 @@ export type View = 'week' | 'twoWeeks';
 
 export interface Config {
   view: View;
-  showClock: boolean;
+  /** The clock above today: drawn, an empty space of its size (to lay a
+   *  separate Clock module over), or nothing, giving today the room. */
+  clock: 'show' | 'blank' | 'off';
   clockSeconds: boolean;
+  showDate: boolean;
+  /** A font id from the host's registry ("inter", "caveat"...), or '' for the module's own. */
+  clockFont: string;
+  clockWeight: number;
+  clockColor: string;
+  /** Multiply the clock's and the date's default sizes. */
+  clockSize: number;
+  dateSize: number;
   showTime: boolean;
+  /** Where events show when they end as well as start ("5:30–7p"). */
+  endTimes: 'off' | 'near' | 'all';
+  /** Today's and tomorrow's events grow taller the longer they last. */
+  sizeByLength: boolean;
+  /** Today's and tomorrow's events carry a bar as long as they are. */
+  lengthBars: boolean;
   /** Under the title, for today and tomorrow. */
   showLocation: boolean;
   /** Lines a title may be cut to on a busy day in Coming up. */
@@ -44,14 +60,26 @@ export interface Config {
   dividerWidth: number;
   textOutline: boolean;
   accentColor: string;
+  /** The now line, NOW, the ring on the event under way and the countdown:
+   *  its own color, so it stands out from events in the accent's hue. */
+  nowColor: string;
   timeFormat: 'auto' | '12h' | '24h';
 }
 
 export const DEFAULTS: Config = {
   view: 'week',
-  showClock: true,
+  clock: 'show',
   clockSeconds: false,
+  showDate: true,
+  clockFont: '',
+  clockWeight: 800,
+  clockColor: '#ffffff',
+  clockSize: 1,
+  dateSize: 1,
   showTime: true,
+  endTimes: 'near',
+  sizeByLength: false,
+  lengthBars: true,
   showLocation: true,
   titleLines: 2,
   colorBy: 'calendar',
@@ -76,6 +104,7 @@ export const DEFAULTS: Config = {
   dividerWidth: 2,
   textOutline: true,
   accentColor: '#f59e0b',
+  nowColor: '#ffffff',
   timeFormat: 'auto',
 };
 
@@ -102,9 +131,19 @@ export function readConfig(raw: Record<string, unknown>): Config {
   const words = typeof raw.hideWords === 'string' ? raw.hideWords : '';
   return {
     view: oneOf(raw.view, ['week', 'twoWeeks'] as const, DEFAULTS.view),
-    showClock: bool(raw.showClock, DEFAULTS.showClock),
+    // 1.0 had a Clock on/off toggle; off still means off.
+    clock: oneOf(raw.clock, ['show', 'blank', 'off'] as const, bool(raw.showClock, true) ? DEFAULTS.clock : 'off'),
     clockSeconds: bool(raw.clockSeconds, DEFAULTS.clockSeconds),
+    showDate: bool(raw.showDate, DEFAULTS.showDate),
+    clockFont: typeof raw.clockFont === 'string' ? raw.clockFont.trim() : DEFAULTS.clockFont,
+    clockWeight: Math.round(num(raw.clockWeight, DEFAULTS.clockWeight, 100, 900) / 100) * 100,
+    clockColor: color(raw.clockColor, DEFAULTS.clockColor),
+    clockSize: num(raw.clockSize, DEFAULTS.clockSize, 0.4, 2),
+    dateSize: num(raw.dateSize, DEFAULTS.dateSize, 0.4, 2),
     showTime: bool(raw.showTime, DEFAULTS.showTime),
+    endTimes: oneOf(raw.endTimes, ['off', 'near', 'all'] as const, DEFAULTS.endTimes),
+    sizeByLength: bool(raw.sizeByLength, DEFAULTS.sizeByLength),
+    lengthBars: bool(raw.lengthBars, DEFAULTS.lengthBars),
     showLocation: bool(raw.showLocation, DEFAULTS.showLocation),
     titleLines: Math.round(num(raw.titleLines, DEFAULTS.titleLines, 1, 4)),
     colorBy: oneOf(raw.colorBy, ['calendar', 'person'] as const, DEFAULTS.colorBy),
@@ -129,6 +168,7 @@ export function readConfig(raw: Record<string, unknown>): Config {
     dividerWidth: num(raw.dividerWidth, DEFAULTS.dividerWidth, 1, 6),
     textOutline: bool(raw.textOutline, DEFAULTS.textOutline),
     accentColor: color(raw.accentColor, DEFAULTS.accentColor),
+    nowColor: color(raw.nowColor, DEFAULTS.nowColor),
     timeFormat: oneOf(raw.timeFormat, ['auto', '12h', '24h'] as const, DEFAULTS.timeFormat),
   };
 }

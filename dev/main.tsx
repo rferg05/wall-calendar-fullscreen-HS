@@ -37,7 +37,7 @@ const EVENTS = [
   ev('b', 'Mandy hang', AUDRA, { start: at(0, '08:00'), end: at(0, '09:30') }),
   // Today, around now: one done, one under way, one next, one tonight.
   ev('c', 'Dentist', RYAN, { start: inMin(-150), end: inMin(-90) }, '30 N Michigan Ave, Chicago'),
-  ev('now', 'Jenny & Callie hang', AUDRA, { start: inMin(-25), end: inMin(35) }, 'Lula Cafe, Chicago'),
+  ev('now', 'Jenny & Callie hang', RYAN, { start: inMin(-25), end: inMin(35) }, 'Lula Cafe, Chicago'),
   ev('next', 'Pick up dry cleaning', RYAN, { start: inMin(50), end: inMin(65) }),
   ev('late', 'You Can See Everything', SHARED, { start: inMin(220), end: inMin(330) }, 'Music Box Theatre, Chicago'),
   ev('allday', 'Trash & recycling day', SHARED, allDay(0)),

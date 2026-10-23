@@ -51,8 +51,34 @@ export interface ChipProps {
   mode: 'stack' | 'inline' | 'agenda';
   /** Agenda only: under the time, e.g. "NOW" or "in 25 min". */
   note?: ReactNode;
-  /** Under way: ringed in the accent color. */
+  /** Under way: ringed in the now color. */
   current?: boolean;
+  /** Show when it ends as well as when it starts. */
+  endTime?: boolean;
+  /** Length sizing: at least this tall, so a longer event is a taller chip. */
+  minHeight?: string;
+  /** The length bar: a rule along the bottom edge in the event's color, this
+   *  share (0-1) of the chip's width. */
+  lengthBar?: number;
+}
+
+/** A length bar spans the chip at this many hours. */
+export const LENGTH_BAR_FULL_HOURS = 4;
+
+/** The length bar's share of the chip for an event, or undefined for none
+ *  (all-day events run all day; the bar would say nothing). */
+export function lengthBarShare(item: { allDay: boolean; startMs: number; endMs: number }): number | undefined {
+  if (item.allDay) return undefined;
+  const hours = Math.max(0, item.endMs - item.startMs) / 3_600_000;
+  return Math.min(1, Math.max(0.04, hours / LENGTH_BAR_FULL_HOURS));
+}
+
+/** "5:30–7p": a range in the times' own format, the first time's am/pm left
+ *  off when both share it. */
+export function timeRange(start: string, end: string): string {
+  const a = /([ap])$/.exec(start);
+  const b = /([ap])$/.exec(end);
+  return `${a && b && a[1] === b[1] ? start.slice(0, -1) : start}–${end}`;
 }
 
 /** One event. All-day events are filled with their color, timed ones (by
@@ -64,7 +90,7 @@ export interface ChipProps {
  *  surface blending one's tint into the other's. Filled, it runs from one
  *  color to the other. Nothing else on the calendar has a bar on its right
  *  edge, so "ours" reads from across the room without names. */
-export function Chip({ item, config, time, now, mode, note, current }: ChipProps) {
+export function Chip({ item, config, time, now, mode, note, current, endTime, minHeight, lengthBar }: ChipProps) {
   const { event, allDay } = item;
   const palette = chipPalette(event, config);
   const colors = palette[0];
@@ -84,22 +110,29 @@ export function Chip({ item, config, time, now, mode, note, current }: ChipProps
   const bar = (color: string) => (
     <div style={{ width: barWidth, flexShrink: 0, background: color, opacity: grayed ? 0.5 : 1 }} />
   );
+  // The start; with `endTime`, the end too, even when that's after midnight.
+  // A later day of a multi-day event says when it ends.
   let when = '';
+  let until = '';
   if (config.showTime && !allDay) {
-    if (item.first) when = time(item.startMs);
-    else if (item.last) when = `→${time(item.endMs)}`;
+    if (item.first) {
+      when = time(item.startMs);
+      if (endTime) until = time(item.endMs);
+    } else if (item.last) when = `→${time(item.endMs)}`;
   }
   if (mode === 'agenda' && allDay) when = 'All day';
+  const range = until ? timeRange(when, until) : when;
   const title = `${event.icon ? `${event.icon} ` : ''}${event.title?.trim() || '(No title)'}`;
   const location = config.showLocation && mode !== 'inline' && event.location ? event.location.split(',')[0].trim() : '';
   const shadows = [
     grayed ? '' : '0 0.05em 0.2em rgba(0,0,0,0.45)',
-    current ? `inset 0 0 0 0.09em ${config.accentColor}` : '',
+    current ? `inset 0 0 0 0.09em ${config.nowColor}` : '',
   ].filter(Boolean).join(', ');
 
   return (
     <div style={{
-      display: 'flex', minWidth: 0, maxWidth: '100%', flexShrink: 0, borderRadius: '0.3em', overflow: 'hidden',
+      display: 'flex', minWidth: 0, maxWidth: '100%', flexShrink: 0, borderRadius: '0.3em', overflow: 'hidden', minHeight,
+      position: 'relative', paddingBottom: lengthBar !== undefined ? '0.14em' : undefined,
       background: grayed ? PAST_SURFACE : blend(solid ? 'base' : 'surface'), color: ink, opacity: faded ? 0.5 : 1,
       boxShadow: shadows || undefined,
       textShadow: solid && both && ink === '#ffffff' ? '0 0 0.15em rgba(0,0,0,0.75)' : undefined,
@@ -111,6 +144,9 @@ export function Chip({ item, config, time, now, mode, note, current }: ChipProps
           display: 'flex', flexDirection: 'column', gap: '0.12em',
         }}>
           <span style={{ fontSize: '0.82em', fontWeight: 800, whiteSpace: 'nowrap' }}>{when}</span>
+          {until && (
+            <span style={{ fontSize: '0.62em', fontWeight: 700, whiteSpace: 'nowrap', opacity: 0.85 }}>{`–${until}`}</span>
+          )}
           {note}
         </div>
       )}
@@ -119,10 +155,10 @@ export function Chip({ item, config, time, now, mode, note, current }: ChipProps
         padding: mode === 'agenda' ? '0.12em 0.4em 0.16em 0.2em' : '0.14em 0.34em 0.16em', lineHeight: 1.15,
       }}>
         {when && mode === 'stack' && (
-          <div style={{ fontSize: '0.78em', fontWeight: 800, whiteSpace: 'nowrap', opacity: 0.95 }}>{when}</div>
+          <div style={{ fontSize: '0.78em', fontWeight: 800, whiteSpace: 'nowrap', opacity: 0.95 }}>{range}</div>
         )}
         <div style={{ ...clampedTitle, fontWeight: 700 }}>
-          {when && mode === 'inline' && <span style={{ fontWeight: 800, opacity: 0.9, marginRight: '0.3em' }}>{when}</span>}
+          {when && mode === 'inline' && <span style={{ fontWeight: 800, opacity: 0.9, marginRight: '0.3em' }}>{range}</span>}
           {title}
         </div>
         {location && (
@@ -137,6 +173,12 @@ export function Chip({ item, config, time, now, mode, note, current }: ChipProps
             <div key={i} style={{ flex: 1, width: barWidth, background: p.base, opacity: grayed ? 0.5 : 1 }} />
           ))}
         </div>
+      )}
+      {lengthBar !== undefined && (
+        <div style={{
+          position: 'absolute', left: 0, bottom: 0, height: '0.18em', width: `${(lengthBar * 100).toFixed(1)}%`,
+          background: blend('base'), opacity: grayed ? 0.5 : 1, borderTopRightRadius: '0.1em',
+        }} />
       )}
     </div>
   );

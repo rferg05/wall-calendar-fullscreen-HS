@@ -3,7 +3,14 @@
   <head>
     <meta charset="utf-8" />
     <title>Wall Calendar Full Screen preview</title>
+    <!-- The host serves these itself and publishes them as --font-* on <body>;
+         the preview stands in for that so the clock's Font setting can be seen. -->
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;800&family=Caveat:wght@400;700&family=Bebas+Neue&family=Playfair+Display:wght@400;700&family=Pacifico&display=swap" />
     <style>
+      body {
+        --font-inter: 'Inter'; --font-caveat: 'Caveat'; --font-bebas: 'Bebas Neue';
+        --font-playfair: 'Playfair Display'; --font-pacifico: 'Pacifico';
+      }
       body {
         margin: 0;
         padding: 0;

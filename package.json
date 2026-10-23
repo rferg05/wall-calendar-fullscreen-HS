@@ -1,6 +1,6 @@
 {
   "name": "wall-calendar-fullscreen",
-  "version": "1.0.0",
+  "version": "1.1.0",
   "description": "Home Screens plugin: a full-screen wall calendar with a clock, today first, then tomorrow and the rest of the week",
   "license": "MIT",
   "scripts": {

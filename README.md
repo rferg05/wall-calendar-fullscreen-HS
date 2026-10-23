@@ -16,10 +16,12 @@ This always points at the newest release. Home Screens doesn't check URL-install
 
 ## What it shows
 
-- **Clock:** the time, about 126 px tall on a 1080p screen, with the date under it. Seconds are optional.
+- **Clock:** the time, about 126 px tall on a 1080p screen, with the date under it. Its font (any of the host's: Caveat, Bebas Neue, Playfair Display...), weight, color and the time's and date's sizes are its own settings. Seconds are optional. *Leave the space empty* keeps the clock's exact spot clear, for a separate Clock module laid over it.
 - **Today** (left, the largest text, about 44 px): all-day events first, then the day's events in time order with their times lined up down the left.
-  - Finished events sit above a **now line**: a glowing line in the accent color with the current time on it.
-  - The event **under way** is ringed in the accent color, marked **NOW**, and says when it ends.
+  - Each event shows when it starts and, under that, when it ends (*End times*, on for today and tomorrow by default).
+  - A **length bar** runs along the bottom of each event in its color, as long as the event: a full-width bar is 4 hours or more, half-width 2 hours. Durations compare at a glance and take no room. *Size events by length* can also make longer events taller, on days with room.
+  - Finished events sit above a **now line**: a glowing line with the current time on it, in the *Now color* (white by default, so it stands out from events in any calendar's color).
+  - The event **under way** is ringed in the now color and marked **NOW**.
   - The **next** event counts down: *in 25 min*, *in 1h 20m*, *in 3h*.
   - When today has more than fits, the text shrinks a little first, then the finished events fold into one *✓ 3 earlier today* line, then later events drop into *+2 more*. What's still ahead stays as large as it can.
 - **Tomorrow** (middle, about 33 px): the same list, without the now line.
@@ -46,8 +48,13 @@ Text sizes come from the module's size: the root is 30 px on a 1920×1080 module
 | Setting | Default | |
 |---|---|---|
 | Show | 7 days | Or 14, from today. |
-| Clock / Seconds on the clock | on / off | |
+| Clock | Show | Or leave the space empty (for a Clock module), or off. |
+| Clock: Font / Weight / Color | module's / Heavy / white | Any of the host's fonts. |
+| Clock: Time size / Date / Date size / Seconds | 1× / on / 1× / off | |
 | Start times / Location | on / on | Location under the title, today and tomorrow. |
+| End times | Today and tomorrow | Or off, or everywhere ("5:30–7p"). |
+| Length bars | on | Today and tomorrow. Full width is 4 hours. |
+| Size events by length | off | Today and tomorrow, about 1.8 lines an hour up to 4 hours. Eases off on crowded days. |
 | Lines per title in Coming up | 2 | How short a busy day in Coming up may cut titles. Today and tomorrow show up to 3. |
 | Color events by | Calendar color | Or person, from Settings > Family. |
 | Merge duplicate events | on | |
@@ -61,7 +68,8 @@ Text sizes come from the module's size: the root is 30 px on a 1920×1080 module
 | Dividers under headings | on, light gray, 2 px | |
 | Text size | 1× | 0.5–2×. |
 | Outline the clock and headings | on | |
-| Accent color | amber | The now line, Today, NOW and countdowns. |
+| Accent color | amber | Today's heading. |
+| Now color | white | The now line, NOW, the ring on the event under way and the countdown. |
 | Clock times | Household setting | Or 12-hour (7p, 7:30p) or 24-hour. |
 
 ## Development

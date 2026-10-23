@@ -1,14 +1,14 @@
 import React, { useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
 import type { CSSProperties, ReactNode } from 'react';
 import type { PluginComponentProps } from './hs-plugin';
-import { hostFrameStyle } from './host-style';
+import { hostFrameStyle, resolveFontStack } from './host-style';
 import { readConfig } from './config';
 import type { Config } from './config';
 import { addDays, eventsByDay, rollingDays, wallDate, weekday } from './dates';
 import type { CalendarEvent } from './dates';
 import { mergeEvents } from './merge';
 import { chipColors } from './colors';
-import { Chip, EventStack, Heading, MoreLine, OUTLINE, cardFrame, useElementSize } from './chip';
+import { Chip, EventStack, Heading, MoreLine, OUTLINE, cardFrame, lengthBarShare, useElementSize } from './chip';
 import type { Item } from './chip';
 import { clockFormatter, countdown, ownerFinder, timeFormatter, useBoxSize, useEvents, usePeople } from './data';
 import type { Person } from './data';
@@ -41,12 +41,15 @@ const dayLabel = (day: string) => {
 
 // ── Clock ───────────────────────────────────────────────────────────────────
 
-/** The time, large, and the date under it. Ticks on its own each second, so
- *  the rest of the module doesn't re-render with it. */
-function Clock({ format, config, fixedNow }: {
+/** The time, large, and the date under it, in the clock's own font, weight,
+ *  color and sizes. Ticks on its own each second, so the rest of the module
+ *  doesn't re-render with it. `blank` keeps its exact space but draws
+ *  nothing, for a separate Clock module laid over the spot. */
+function Clock({ format, config, fixedNow, blank }: {
   format: ReturnType<typeof clockFormatter>;
   config: Config;
   fixedNow?: number;
+  blank: boolean;
 }) {
   const [tick, setTick] = useState(() => fixedNow ?? Date.now());
   useEffect(() => {
@@ -56,12 +59,21 @@ function Clock({ format, config, fixedNow }: {
   }, [fixedNow]);
   const c = format(fixedNow ?? tick);
   return (
-    <div style={{ flexShrink: 0, lineHeight: 1, textShadow: config.textOutline ? OUTLINE : undefined, padding: '0 0.1em' }}>
-      <div style={{ fontSize: '4.2em', fontWeight: 800, letterSpacing: '-0.02em', fontVariantNumeric: 'tabular-nums', whiteSpace: 'nowrap' }}>
+    <div aria-hidden={blank} style={{
+      flexShrink: 0, lineHeight: 1, padding: '0 0.1em', visibility: blank ? 'hidden' : undefined,
+      fontFamily: resolveFontStack(config.clockFont), fontWeight: config.clockWeight, color: config.clockColor,
+      textShadow: config.textOutline ? OUTLINE : undefined,
+    }}>
+      <div style={{ fontSize: `${4.2 * config.clockSize}em`, letterSpacing: '-0.02em', fontVariantNumeric: 'tabular-nums', whiteSpace: 'nowrap' }}>
         {c.time}
-        {c.period && <span style={{ fontSize: '0.36em', fontWeight: 700, marginLeft: '0.25em', letterSpacing: 0 }}>{c.period}</span>}
+        {c.period && <span style={{ fontSize: '0.36em', marginLeft: '0.25em', letterSpacing: 0 }}>{c.period}</span>}
       </div>
-      <div style={{ fontSize: '1.3em', fontWeight: 700, marginTop: '0.2em', whiteSpace: 'nowrap', opacity: 0.95 }}>{c.date}</div>
+      {config.showDate && (
+        <div style={{
+          fontSize: `${1.3 * config.dateSize}em`, fontWeight: Math.min(config.clockWeight, 700), marginTop: '0.2em',
+          whiteSpace: 'nowrap', opacity: 0.95,
+        }}>{c.date}</div>
+      )}
     </div>
   );
 }
@@ -70,7 +82,7 @@ function Clock({ format, config, fixedNow }: {
 
 /** The glowing line across today's list that says where in the day it is. */
 function NowLine({ label, config }: { label: string; config: Config }) {
-  const accent = config.accentColor;
+  const accent = config.nowColor;
   return (
     <div style={{ display: 'flex', alignItems: 'center', gap: '0.3em', flexShrink: 0, margin: '0.05em 0' }}>
       <span style={{
@@ -85,20 +97,34 @@ function NowLine({ label, config }: { label: string; config: Config }) {
 const noteStyle = (config: Config, filled: boolean): CSSProperties => ({
   fontSize: '0.6em', fontWeight: 900, lineHeight: 1.1, whiteSpace: 'nowrap', letterSpacing: '0.02em', alignSelf: 'flex-start',
   ...(filled
-    ? { background: config.accentColor, color: chipColors(config.accentColor).onBase, borderRadius: '0.3em', padding: '0.1em 0.3em' }
-    : { color: config.accentColor }),
+    ? { background: config.nowColor, color: chipColors(config.nowColor).onBase, borderRadius: '0.3em', padding: '0.1em 0.3em' }
+    : { color: config.nowColor }),
 });
 
 /** Today's text may shrink this far before finished events fold away. */
 const MIN_AGENDA_SCALE = 0.75;
+/** Length sizing: an event's chip is at least this many em tall per hour,
+ *  up to LENGTH_MAX_EM, so a 3-hour event stands three times a 1-hour one.
+ *  Short events never go below their own text's height. */
+const LENGTH_EM_PER_HOUR = 1.8;
+const LENGTH_MAX_EM = 7;
+
+/** How tall `item` should be with length sizing, at `factor` (1, eased to
+ *  0.5 then 0 on a crowded day). */
+export function lengthHeight(item: Item, factor: number): string | undefined {
+  if (item.allDay || factor <= 0) return undefined;
+  const hours = Math.max(0, item.endMs - item.startMs) / 3_600_000;
+  return `${Math.min(LENGTH_MAX_EM, hours * LENGTH_EM_PER_HOUR * factor).toFixed(2)}em`;
+}
 
 /**
  * A day as a list, times lined up down the left. With `nowLine` (today):
  * finished events first, then the now line, then the event under way, marked
- * NOW, and the rest, the next one counting down. When it doesn't fit, the
- * text shrinks a little first, then the finished events fold into one
- * "3 earlier" line, then events drop off the end into "+2 more", so what's
- * still ahead stays as large as it can.
+ * NOW, and the rest, the next one counting down. When it doesn't fit, length
+ * sizing eases off first (to half, then off), then the text shrinks a
+ * little, then the finished events fold into one "3 earlier" line, then
+ * events drop off the end into "+2 more", so what's still ahead stays as
+ * large as it can.
  */
 function Agenda({ items, now, nowLine, config, time, resetKey, empty }: {
   items: Item[];
@@ -117,7 +143,8 @@ function Agenda({ items, now, nowLine, config, time, resetKey, empty }: {
   const ref = useRef<HTMLDivElement>(null);
   const size = useElementSize(ref);
   const key = `${resetKey}|${items.map((i) => i.event.id).join(',')}|${done.length}|${size}`;
-  const [fit, setFit] = useState({ key: '', scale: 1, folded: false, shown: ahead.length });
+  const [fit, setFit] = useState({ key: '', lengths: 1, scale: 1, folded: false, shown: ahead.length });
+  const lengths = config.sizeByLength ? (fit.key === key ? fit.lengths : 1) : 0;
   const scale = fit.key === key ? fit.scale : 1;
   const folded = fit.key === key ? fit.folded : false;
   const shown = fit.key === key ? fit.shown : ahead.length;
@@ -126,8 +153,9 @@ function Agenda({ items, now, nowLine, config, time, resetKey, empty }: {
     const el = ref.current;
     if (!el || !el.clientHeight) return;
     const over = el.scrollHeight > el.clientHeight + 1;
-    const state = { key, scale, folded, shown };
-    if (over && scale > MIN_AGENDA_SCALE) setFit({ ...state, scale: Math.max(MIN_AGENDA_SCALE, scale * 0.92) });
+    const state = { key, lengths, scale, folded, shown };
+    if (over && lengths > 0) setFit({ ...state, lengths: lengths > 0.5 ? 0.5 : 0 });
+    else if (over && scale > MIN_AGENDA_SCALE) setFit({ ...state, scale: Math.max(MIN_AGENDA_SCALE, scale * 0.92) });
     else if (over && !folded && done.length > 0) setFit({ ...state, folded: true });
     else if (over && shown > 0) setFit({ ...state, shown: shown - 1 });
     else if (fit.key !== key) setFit(state);
@@ -137,12 +165,13 @@ function Agenda({ items, now, nowLine, config, time, resetKey, empty }: {
   const chip = (item: Item) => {
     // All-day events last all day, so marking them NOW would say nothing.
     const current = nowLine && !item.allDay && item.startMs <= now && item.endMs > now;
+    const endTime = config.endTimes !== 'off';
     let note: ReactNode = null;
     if (current) {
       note = (
         <>
           <span style={noteStyle(config, true)}>NOW</span>
-          <span style={{ ...noteStyle(config, false), color: 'inherit', opacity: 0.85 }}>ends {time(item.endMs)}</span>
+          {!endTime && <span style={{ ...noteStyle(config, false), color: 'inherit', opacity: 0.85 }}>ends {time(item.endMs)}</span>}
         </>
       );
     } else if (nowLine && item === nextUp) {
@@ -151,7 +180,8 @@ function Agenda({ items, now, nowLine, config, time, resetKey, empty }: {
     }
     return (
       <Chip key={`${item.event.id}|${item.event.start}`} item={item} config={config} time={time} now={now}
-        mode="agenda" note={note} current={current} />
+        mode="agenda" note={note} current={current} endTime={endTime} minHeight={lengthHeight(item, lengths)}
+        lengthBar={config.lengthBars ? lengthBarShare(item) : undefined} />
     );
   };
   const hidden = ahead.length - shown;
@@ -205,7 +235,7 @@ function ComingDay({ day, items, config, time, now, resetKey }: {
         <span style={{ fontSize: '1.05em' }}>{label.date}</span>
       </Heading>
       <EventStack items={items} resetKey={resetKey} lines={config.titleLines}>
-        {(item) => <Chip item={item} config={config} time={time} now={now} mode="inline" />}
+        {(item) => <Chip item={item} config={config} time={time} now={now} mode="inline" endTime={config.endTimes === 'all'} />}
       </EventStack>
     </div>
   );
@@ -254,7 +284,8 @@ export default function WallCalendarFullScreen(props: WallCalendarFullScreenProp
   const fit = box.w > 0 && box.h > 0 ? Math.min(box.w / 1920, box.h / 1080) : 1;
   const textSize = (style.fontSize || 16) / 16;
   const fontPx = Math.max(MIN_FONT_PX, BASE_FONT_PX * fit * textSize * config.textScale);
-  const resetKey = `${fontPx.toFixed(2)}|${config.view}|${config.titleLines}|${config.showTime}|${config.showLocation}|${config.showClock}`;
+  const resetKey = [fontPx.toFixed(2), config.view, config.titleLines, config.showTime, config.showLocation, config.clock,
+    config.showDate, config.clockSize, config.dateSize, config.clockFont, config.endTimes, config.sizeByLength, config.lengthBars].join('|');
 
   const panels = PANELS[config.view];
   const rest = days.slice(2);
@@ -270,7 +301,7 @@ export default function WallCalendarFullScreen(props: WallCalendarFullScreenProp
       }}>
         {/* Today: the clock above the day's events, at the largest size. */}
         <div style={{ minWidth: 0, minHeight: 0, display: 'flex', flexDirection: 'column', gap: '0.45em' }}>
-          {config.showClock && <Clock format={clock} config={config} fixedNow={props.nowMs} />}
+          {config.clock !== 'off' && <Clock format={clock} config={config} fixedNow={props.nowMs} blank={config.clock === 'blank'} />}
           <div style={{ ...cardFrame(config), ...panelPadding, flex: 1, fontSize: `${panels.today}em` }}>
             <Heading config={config} color={config.accentColor}>
               <span style={{ fontSize: '0.75em' }}>Today</span>

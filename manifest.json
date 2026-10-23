@@ -1,7 +1,7 @@
 {
   "id": "wall-calendar-fullscreen",
   "name": "Wall Calendar Full Screen",
-  "version": "1.0.0",
+  "version": "1.1.0",
   "description": "A full-screen calendar for the wall: a big clock and today's events with a now line, tomorrow a step smaller, then the rest of the next 7 or 14 days. Readable from across the room over any background.",
   "author": "Ryan",
   "license": "MIT",
@@ -11,9 +11,18 @@
   "icon": "calendar-clock",
   "defaultConfig": {
     "view": "week",
-    "showClock": true,
+    "clock": "show",
+    "clockFont": "",
+    "clockWeight": "800",
+    "clockColor": "#ffffff",
+    "clockSize": 1,
+    "showDate": true,
+    "dateSize": 1,
     "clockSeconds": false,
     "showTime": true,
+    "endTimes": "near",
+    "lengthBars": true,
+    "sizeByLength": false,
     "showLocation": true,
     "titleLines": 2,
     "colorBy": "calendar",
@@ -38,6 +47,7 @@
     "textScale": 1,
     "textOutline": true,
     "accentColor": "#f59e0b",
+    "nowColor": "#ffffff",
     "timeFormat": "auto"
   },
   "defaultSize": {
@@ -67,26 +77,178 @@
         "ui:widget": "select",
         "ui:group": "View"
       },
-      "showClock": {
-        "type": "boolean",
+      "clock": {
+        "type": "string",
         "title": "Clock",
-        "description": "The time and date, large, above today's events.",
+        "description": "Leave the space empty keeps the clock's exact spot clear, so a separate Clock module (with its own fonts and styles) can sit there. Off gives today's events the room instead.",
+        "enum": [
+          "show",
+          "blank",
+          "off"
+        ],
+        "enumLabels": [
+          "Show",
+          "Leave the space empty (for a Clock module)",
+          "Off"
+        ],
+        "ui:widget": "select",
+        "ui:group": "Clock"
+      },
+      "clockFont": {
+        "type": "string",
+        "title": "Font",
+        "enum": [
+          "",
+          "inter",
+          "roboto",
+          "poppins",
+          "system-ui",
+          "playfair",
+          "lora",
+          "dm-serif",
+          "georgia",
+          "jetbrains",
+          "mono",
+          "bebas",
+          "caveat",
+          "pacifico"
+        ],
+        "enumLabels": [
+          "Same as the module",
+          "Inter",
+          "Roboto",
+          "Poppins",
+          "System",
+          "Playfair Display",
+          "Lora",
+          "DM Serif Display",
+          "Georgia",
+          "JetBrains Mono",
+          "Monospace",
+          "Bebas Neue",
+          "Caveat (handwritten)",
+          "Pacifico (script)"
+        ],
+        "ui:widget": "select",
+        "ui:group": "Clock",
+        "ui:showWhen": {
+          "field": "clock",
+          "equals": "show"
+        }
+      },
+      "clockWeight": {
+        "type": "string",
+        "title": "Weight",
+        "enum": [
+          "300",
+          "400",
+          "600",
+          "800"
+        ],
+        "enumLabels": [
+          "Light",
+          "Regular",
+          "Semibold",
+          "Heavy"
+        ],
+        "ui:widget": "select",
+        "ui:group": "Clock",
+        "ui:showWhen": {
+          "field": "clock",
+          "equals": "show"
+        }
+      },
+      "clockColor": {
+        "type": "string",
+        "title": "Color",
+        "ui:widget": "color",
+        "ui:group": "Clock",
+        "ui:showWhen": {
+          "field": "clock",
+          "equals": "show"
+        }
+      },
+      "clockSize": {
+        "type": "number",
+        "title": "Time size",
+        "description": "1 is about 126px tall on a full 1080p screen.",
+        "minimum": 0.4,
+        "maximum": 2,
+        "ui:widget": "slider",
+        "ui:step": 0.05,
+        "ui:group": "Clock",
+        "ui:showWhen": {
+          "field": "clock",
+          "equals": "show"
+        }
+      },
+      "showDate": {
+        "type": "boolean",
+        "title": "Date",
         "ui:widget": "toggle",
-        "ui:group": "View"
+        "ui:group": "Clock",
+        "ui:showWhen": {
+          "field": "clock",
+          "equals": "show"
+        }
+      },
+      "dateSize": {
+        "type": "number",
+        "title": "Date size",
+        "minimum": 0.4,
+        "maximum": 2,
+        "ui:widget": "slider",
+        "ui:step": 0.05,
+        "ui:group": "Clock",
+        "ui:showWhen": {
+          "field": "clock",
+          "equals": "show"
+        }
       },
       "clockSeconds": {
         "type": "boolean",
         "title": "Seconds on the clock",
         "ui:widget": "toggle",
-        "ui:group": "View",
+        "ui:group": "Clock",
         "ui:showWhen": {
-          "field": "showClock",
-          "equals": true
+          "field": "clock",
+          "equals": "show"
         }
       },
       "showTime": {
         "type": "boolean",
         "title": "Start times",
+        "ui:widget": "toggle",
+        "ui:group": "Events"
+      },
+      "endTimes": {
+        "type": "string",
+        "title": "End times",
+        "description": "Shows when events end as well as start, as \"5:30–7p\". Today and tomorrow have room for it; Coming up gets tighter with it on.",
+        "enum": [
+          "off",
+          "near",
+          "all"
+        ],
+        "enumLabels": [
+          "Off",
+          "Today and tomorrow",
+          "Everywhere"
+        ],
+        "ui:widget": "select",
+        "ui:group": "Events"
+      },
+      "lengthBars": {
+        "type": "boolean",
+        "title": "Length bars",
+        "description": "A bar along the bottom of each of today's and tomorrow's events, as long as the event: a full-width bar is 4 hours or more, a half-width bar 2 hours. Takes no extra room.",
+        "ui:widget": "toggle",
+        "ui:group": "Events"
+      },
+      "sizeByLength": {
+        "type": "boolean",
+        "title": "Size events by length",
+        "description": "Today's and tomorrow's events grow taller the longer they last, about 1.8 lines an hour, up to 4 hours. Events under about an hour and a half all look alike, since each needs room for its time and title. On a crowded day the sizing eases off before anything shrinks or is left off; length bars show durations either way.",
         "ui:widget": "toggle",
         "ui:group": "Events"
       },
@@ -322,7 +484,14 @@
         "title": "Accent color",
         "ui:widget": "color",
         "ui:group": "Legibility",
-        "description": "The now line, today's heading, NOW and countdowns."
+        "description": "Today's heading."
+      },
+      "nowColor": {
+        "type": "string",
+        "title": "Now color",
+        "description": "The now line, its time, NOW, the ring on the event under way and the countdown. White by default, so it stands out from events in any calendar's color.",
+        "ui:widget": "color",
+        "ui:group": "Legibility"
       },
       "timeFormat": {
         "type": "string",
