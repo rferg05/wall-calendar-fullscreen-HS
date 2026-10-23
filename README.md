@@ -4,6 +4,16 @@ Home Screens module: a whole-screen calendar for the wall, in order of what matt
 
 A fork of [Wall Calendar](../wall-calendar/README.md): the same events, duplicate merging, shared-event colors, past-event graying and card styling, laid out for one screen instead of a grid.
 
+## Install
+
+In the Home Screens editor, open the Plugin Store, choose **Install from URL**, and paste:
+
+```
+https://github.com/rferg05/wall-calendar-fullscreen-HS/releases/latest/download/wall-calendar-fullscreen.tar.gz
+```
+
+This always points at the newest release. Home Screens doesn't check URL-installed plugins for updates on its own, so to update: Plugin Store > **Installed**, then the download icon on Wall Calendar Full Screen, then **Install**. Then add **Wall Calendar Full Screen** to a screen from the Calendar category and size it to fill the screen.
+
 ## What it shows
 
 - **Clock:** the time, about 126 px tall on a 1080p screen, with the date under it. Seconds are optional.
@@ -72,4 +82,11 @@ mkdir -p release/pkg/wall-calendar-fullscreen/dist
 cp manifest.json release/pkg/wall-calendar-fullscreen/
 cp dist/bundle.js dist/bundle.js.map release/pkg/wall-calendar-fullscreen/dist/
 tar -czf release/wall-calendar-fullscreen-<version>.tar.gz -C release/pkg wall-calendar-fullscreen
+```
+
+Attach it to a GitHub release tagged `v<version>`, along with a copy named `wall-calendar-fullscreen.tar.gz` so the `latest/download` URL above keeps working:
+
+```bash
+cp release/wall-calendar-fullscreen-<version>.tar.gz release/wall-calendar-fullscreen.tar.gz
+gh release create v<version> release/wall-calendar-fullscreen-<version>.tar.gz release/wall-calendar-fullscreen.tar.gz --title v<version>
 ```
