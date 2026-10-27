@@ -20,8 +20,8 @@ This always points at the newest release. Home Screens doesn't check URL-install
 - **Today** (left, the largest text, about 44 px): all-day events first, then the day's events in time order with their times lined up down the left.
   - Each event shows when it starts and, under that, when it ends (*End times*, on for today and tomorrow by default).
   - A **length bar** runs along the bottom of each event in its color, as long as the event: a full-width bar is 4 hours or more, half-width 2 hours. Durations compare at a glance and take no room. *Size events by length* can also make longer events taller, on days with room.
-  - Finished events sit above a **now line**: a glowing line with the current time on it, in the *Now color* (white by default, so it stands out from events in any calendar's color).
-  - The event **under way** is ringed in the now color and marked **NOW**.
+  - The event **under way** is ringed in the *Now color* (white by default, so it stands out from events in any calendar's color) and marked **NOW**, and the **now line** crosses it as far down as the event has got: a third of the way through, a third of the way down. Two events under way at once each get their own line.
+  - Between events, the now line sits in the gap instead, with the current time on it, below the finished events.
   - The **next** event counts down: *in 25 min*, *in 1h 20m*, *in 3h*.
   - When today has more than fits, the text shrinks a little first, then the finished events fold into one *✓ 3 earlier today* line, then later events drop into *+2 more*. What's still ahead stays as large as it can.
 - **Tomorrow** (middle, about 33 px): the same list, without the now line.

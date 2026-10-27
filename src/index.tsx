@@ -119,8 +119,9 @@ export function lengthHeight(item: Item, factor: number): string | undefined {
 
 /**
  * A day as a list, times lined up down the left. With `nowLine` (today):
- * finished events first, then the now line, then the event under way, marked
- * NOW, and the rest, the next one counting down. When it doesn't fit, length
+ * finished events first, then the event under way, marked NOW, with the now
+ * line across it as far down as it's got, and the rest, the next one counting
+ * down. Between events, the now line sits in the gap. When it doesn't fit, length
  * sizing eases off first (to half, then off), then the text shrinks a
  * little, then the finished events fold into one "3 earlier" line, then
  * events drop off the end into "+2 more", so what's still ahead stays as
@@ -162,6 +163,7 @@ function Agenda({ items, now, nowLine, config, time, resetKey, empty }: {
   });
 
   const nextUp = ahead.find((i) => i.startMs > now);
+  const underWay = nowLine && ahead.slice(0, shown).some((i) => i.startMs <= now);
   const chip = (item: Item) => {
     // All-day events last all day, so marking them NOW would say nothing.
     const current = nowLine && !item.allDay && item.startMs <= now && item.endMs > now;
@@ -181,7 +183,8 @@ function Agenda({ items, now, nowLine, config, time, resetKey, empty }: {
     return (
       <Chip key={`${item.event.id}|${item.event.start}`} item={item} config={config} time={time} now={now}
         mode="agenda" note={note} current={current} endTime={endTime} minHeight={lengthHeight(item, lengths)}
-        lengthBar={config.lengthBars ? lengthBarShare(item) : undefined} />
+        lengthBar={config.lengthBars ? lengthBarShare(item) : undefined}
+        progress={current ? (now - item.startMs) / Math.max(1, item.endMs - item.startMs) : undefined} />
     );
   };
   const hidden = ahead.length - shown;
@@ -201,7 +204,9 @@ function Agenda({ items, now, nowLine, config, time, resetKey, empty }: {
           </div>
         )
         : done.map(chip))}
-      {nowLine && <NowLine label={time(now)} config={config} />}
+      {/* While something is under way the now line crosses it instead (see
+          Chip's progress), so this one only marks the gap between events. */}
+      {nowLine && !underWay && <NowLine label={time(now)} config={config} />}
       {ahead.slice(0, shown).map(chip)}
       {hidden > 0 && <MoreLine count={hidden} />}
       {ahead.length === 0 && (

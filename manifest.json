@@ -1,7 +1,7 @@
 {
   "id": "wall-calendar-fullscreen",
   "name": "Wall Calendar Full Screen",
-  "version": "1.1.0",
+  "version": "1.1.1",
   "description": "A full-screen calendar for the wall: a big clock and today's events with a now line, tomorrow a step smaller, then the rest of the next 7 or 14 days. Readable from across the room over any background.",
   "author": "Ryan",
   "license": "MIT",

@@ -60,6 +60,9 @@ export interface ChipProps {
   /** The length bar: a rule along the bottom edge in the event's color, this
    *  share (0-1) of the chip's width. */
   lengthBar?: number;
+  /** Under way: how far through it is (0-1). The now line crosses the chip
+   *  that far down, so where you are in the event shows at a glance. */
+  progress?: number;
 }
 
 /** A length bar spans the chip at this many hours. */
@@ -90,7 +93,7 @@ export function timeRange(start: string, end: string): string {
  *  surface blending one's tint into the other's. Filled, it runs from one
  *  color to the other. Nothing else on the calendar has a bar on its right
  *  edge, so "ours" reads from across the room without names. */
-export function Chip({ item, config, time, now, mode, note, current, endTime, minHeight, lengthBar }: ChipProps) {
+export function Chip({ item, config, time, now, mode, note, current, endTime, minHeight, lengthBar, progress }: ChipProps) {
   const { event, allDay } = item;
   const palette = chipPalette(event, config);
   const colors = palette[0];
@@ -174,6 +177,7 @@ export function Chip({ item, config, time, now, mode, note, current, endTime, mi
           ))}
         </div>
       )}
+      {progress !== undefined && <ProgressLine progress={progress} color={config.nowColor} />}
       {lengthBar !== undefined && (
         <div style={{
           position: 'absolute', left: 0, bottom: 0, height: '0.18em', width: `${(lengthBar * 100).toFixed(1)}%`,
@@ -181,6 +185,25 @@ export function Chip({ item, config, time, now, mode, note, current, endTime, mi
         }} />
       )}
     </div>
+  );
+}
+
+/** The now line where it crosses the event under way: a glowing rule from
+ *  edge to edge with a dot at the start, `progress` of the way down. A thin
+ *  dark edge keeps it apart from white text it passes through. */
+function ProgressLine({ progress, color }: { progress: number; color: string }) {
+  const top = `${(Math.min(1, Math.max(0, progress)) * 100).toFixed(1)}%`;
+  return (
+    <>
+      <div style={{
+        position: 'absolute', left: 0, right: 0, top, height: '0.09em', transform: 'translateY(-50%)', zIndex: 1,
+        background: color, boxShadow: `0 0 0.3em ${color}, 0 0 0 0.03em rgba(0, 0, 0, 0.55)`, pointerEvents: 'none',
+      }} />
+      <div style={{
+        position: 'absolute', left: '0.08em', top, width: '0.34em', height: '0.34em', borderRadius: '50%', zIndex: 1,
+        transform: 'translateY(-50%)', background: color, boxShadow: `0 0 0.35em ${color}`, pointerEvents: 'none',
+      }} />
+    </>
   );
 }
 
