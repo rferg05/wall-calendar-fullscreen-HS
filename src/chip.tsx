@@ -49,7 +49,7 @@ export interface ChipProps {
    * which lines the times up and leaves room under each for `note`.
    */
   mode: 'stack' | 'inline' | 'agenda';
-  /** Agenda only: under the time, e.g. "NOW" or "in 25 min". */
+  /** Agenda and stack: under the time, e.g. "NOW" or "in 25 min". */
   note?: ReactNode;
   /** Under way: ringed in the now color. */
   current?: boolean;
@@ -63,6 +63,9 @@ export interface ChipProps {
   /** Under way: how far through it is (0-1). The now line crosses the chip
    *  that far down, so where you are in the event shows at a glance. */
   progress?: number;
+  /** Fill the height it's given: side by side with another event, the two
+   *  cards stand as tall as the taller. */
+  grow?: boolean;
 }
 
 /** A length bar spans the chip at this many hours. */
@@ -93,7 +96,7 @@ export function timeRange(start: string, end: string): string {
  *  surface blending one's tint into the other's. Filled, it runs from one
  *  color to the other. Nothing else on the calendar has a bar on its right
  *  edge, so "ours" reads from across the room without names. */
-export function Chip({ item, config, time, now, mode, note, current, endTime, minHeight, lengthBar, progress }: ChipProps) {
+export function Chip({ item, config, time, now, mode, note, current, endTime, minHeight, lengthBar, progress, grow }: ChipProps) {
   const { event, allDay } = item;
   const palette = chipPalette(event, config);
   const colors = palette[0];
@@ -135,7 +138,7 @@ export function Chip({ item, config, time, now, mode, note, current, endTime, mi
   return (
     <div style={{
       display: 'flex', minWidth: 0, maxWidth: '100%', flexShrink: 0, borderRadius: '0.3em', overflow: 'hidden', minHeight,
-      position: 'relative', paddingBottom: lengthBar !== undefined ? '0.14em' : undefined,
+      position: 'relative', flex: grow ? '1 1 auto' : undefined, paddingBottom: lengthBar !== undefined ? '0.14em' : undefined,
       background: grayed ? PAST_SURFACE : blend(solid ? 'base' : 'surface'), color: ink, opacity: faded ? 0.5 : 1,
       boxShadow: shadows || undefined,
       textShadow: solid && both && ink === '#ffffff' ? '0 0 0.15em rgba(0,0,0,0.75)' : undefined,
@@ -159,6 +162,9 @@ export function Chip({ item, config, time, now, mode, note, current, endTime, mi
       }}>
         {when && mode === 'stack' && (
           <div style={{ fontSize: '0.78em', fontWeight: 800, whiteSpace: 'nowrap', opacity: 0.95 }}>{range}</div>
+        )}
+        {note && mode === 'stack' && (
+          <div style={{ display: 'flex', alignItems: 'center', gap: '0.3em', margin: '0.1em 0 0.12em' }}>{note}</div>
         )}
         <div style={{ ...clampedTitle, fontWeight: 700 }}>
           {when && mode === 'inline' && <span style={{ fontWeight: 800, opacity: 0.9, marginRight: '0.3em' }}>{range}</span>}
@@ -188,10 +194,11 @@ export function Chip({ item, config, time, now, mode, note, current, endTime, mi
   );
 }
 
-/** The now line where it crosses the event under way: a glowing rule from
- *  edge to edge with a dot at the start, `progress` of the way down. A thin
+/** The now line where it crosses what's under way: a glowing rule from edge
+ *  to edge of its positioned parent (one event's card, or a row of events
+ *  side by side) with a dot at the start, `progress` of the way down. A thin
  *  dark edge keeps it apart from white text it passes through. */
-function ProgressLine({ progress, color }: { progress: number; color: string }) {
+export function ProgressLine({ progress, color }: { progress: number; color: string }) {
   const top = `${(Math.min(1, Math.max(0, progress)) * 100).toFixed(1)}%`;
   return (
     <>

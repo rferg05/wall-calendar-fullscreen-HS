@@ -8,7 +8,7 @@ import { addDays, eventsByDay, rollingDays, wallDate, weekday } from './dates';
 import type { CalendarEvent } from './dates';
 import { mergeEvents } from './merge';
 import { chipColors } from './colors';
-import { Chip, EventStack, Heading, MoreLine, OUTLINE, cardFrame, lengthBarShare, useElementSize } from './chip';
+import { Chip, EventStack, Heading, MoreLine, OUTLINE, ProgressLine, cardFrame, lengthBarShare, useElementSize } from './chip';
 import type { Item } from './chip';
 import { clockFormatter, countdown, ownerFinder, timeFormatter, useBoxSize, useEvents, usePeople } from './data';
 import type { Person } from './data';
@@ -163,8 +163,14 @@ function Agenda({ items, now, nowLine, config, time, resetKey, empty }: {
   });
 
   const nextUp = ahead.find((i) => i.startMs > now);
-  const underWay = nowLine && ahead.slice(0, shown).some((i) => i.startMs <= now);
-  const chip = (item: Item) => {
+  const shownAhead = ahead.slice(0, shown);
+  // What's under way: one event, or several at once. `ahead` runs in start
+  // order, so these come first.
+  const running = nowLine ? shownAhead.filter((i) => i.startMs <= now) : [];
+  const later = shownAhead.filter((i) => !running.includes(i));
+  /** `inRow`: one of several events under way, side by side under one now
+   *  line, with its times above the title so the title has the card's width. */
+  const chip = (item: Item, inRow = false) => {
     // All-day events last all day, so marking them NOW would say nothing.
     const current = nowLine && !item.allDay && item.startMs <= now && item.endMs > now;
     const endTime = config.endTimes !== 'off';
@@ -182,9 +188,9 @@ function Agenda({ items, now, nowLine, config, time, resetKey, empty }: {
     }
     return (
       <Chip key={`${item.event.id}|${item.event.start}`} item={item} config={config} time={time} now={now}
-        mode="agenda" note={note} current={current} endTime={endTime} minHeight={lengthHeight(item, lengths)}
-        lengthBar={config.lengthBars ? lengthBarShare(item) : undefined}
-        progress={current ? (now - item.startMs) / Math.max(1, item.endMs - item.startMs) : undefined} />
+        mode={inRow ? 'stack' : 'agenda'} note={note} current={current} endTime={endTime} minHeight={lengthHeight(item, lengths)}
+        lengthBar={config.lengthBars ? lengthBarShare(item) : undefined} grow={inRow}
+        progress={current && !inRow ? (now - item.startMs) / Math.max(1, item.endMs - item.startMs) : undefined} />
     );
   };
   const hidden = ahead.length - shown;
@@ -196,24 +202,53 @@ function Agenda({ items, now, nowLine, config, time, resetKey, empty }: {
       fontSize: `${scale}em`, flex: 1, minHeight: 0, overflow: 'hidden',
       display: 'flex', flexDirection: 'column', gap: '0.22em',
     }}>
-      {allDay.map(chip)}
+      {allDay.map((item) => chip(item))}
       {showDone && (folded
         ? done.length > 0 && (
           <div style={{ fontSize: '0.7em', fontWeight: 700, opacity: 0.75, flexShrink: 0, paddingLeft: '0.3em' }}>
             {`✓ ${done.length} earlier today`}
           </div>
         )
-        : done.map(chip))}
+        : done.map((item) => chip(item)))}
       {/* While something is under way the now line crosses it instead (see
           Chip's progress), so this one only marks the gap between events. */}
-      {nowLine && !underWay && <NowLine label={time(now)} config={config} />}
-      {ahead.slice(0, shown).map(chip)}
+      {nowLine && running.length === 0 && <NowLine label={time(now)} config={config} />}
+      {running.length > 1 ? <RunningRow items={running} now={now} config={config}>{(item) => chip(item, true)}</RunningRow>
+        : running.map((item) => chip(item))}
+      {later.map((item) => chip(item))}
       {hidden > 0 && <MoreLine count={hidden} />}
       {ahead.length === 0 && (
         <div style={{ fontSize: '0.75em', fontWeight: 600, opacity: 0.75, flexShrink: 0, paddingLeft: '0.3em', textShadow: config.textOutline ? OUTLINE : undefined }}>
           {empty}
         </div>
       )}
+    </div>
+  );
+}
+
+/**
+ * Events under way at the same time (one person's and another's), side by
+ * side at equal widths and equal heights, with one now line across them all.
+ * They can start and end at different times, so the line marks how far
+ * through the stretch they cover together has got: from the first start to
+ * the last end. Each card keeps its own times, NOW and ring.
+ */
+function RunningRow({ items, now, config, children }: {
+  items: Item[];
+  now: number;
+  config: Config;
+  children: (item: Item) => ReactNode;
+}) {
+  const from = Math.min(...items.map((i) => i.startMs));
+  const to = Math.max(...items.map((i) => i.endMs));
+  return (
+    <div style={{ position: 'relative', display: 'flex', alignItems: 'stretch', gap: '0.22em', flexShrink: 0 }}>
+      {items.map((item) => (
+        <div key={`${item.event.id}|${item.event.start}`} style={{ flex: '1 1 0', minWidth: 0, display: 'flex', flexDirection: 'column' }}>
+          {children(item)}
+        </div>
+      ))}
+      <ProgressLine progress={(now - from) / Math.max(1, to - from)} color={config.nowColor} />
     </div>
   );
 }

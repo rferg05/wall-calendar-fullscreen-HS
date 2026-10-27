@@ -38,6 +38,8 @@ const EVENTS = [
   // Today, around now: one done, one under way, one next, one tonight.
   ev('c', 'Dentist', RYAN, { start: inMin(-150), end: inMin(-90) }, '30 N Michigan Ave, Chicago'),
   ev('now', 'Jenny & Callie hang', RYAN, { start: inMin(-25), end: inMin(35) }, 'Lula Cafe, Chicago'),
+  // Audra's, at the same time: the two sit side by side under one now line.
+  ev('now2', 'Yoga with Priya', AUDRA, { start: inMin(-40), end: inMin(20) }, 'CorePower Yoga, Chicago'),
   ev('next', 'Pick up dry cleaning', RYAN, { start: inMin(50), end: inMin(65) }),
   ev('late', 'You Can See Everything', SHARED, { start: inMin(220), end: inMin(330) }, 'Music Box Theatre, Chicago'),
   ev('allday', 'Trash & recycling day', SHARED, allDay(0)),
